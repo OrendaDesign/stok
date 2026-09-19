@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#4f46e5">
+<title>Taş Stok Takip</title>
+<style>
+:root{
+  --bg:#eef1f7; --panel:#ffffff; --ink:#1e2532; --muted:#6b7688;
+  --line:#e6e9f0; --brand:#4f46e5; --brand2:#6366f1;
+  --green:#16a34a; --greenbg:#dcfce7; --greenink:#15803d;
+  --blue:#2563eb; --bluebg:#dbeafe; --blueink:#1d4ed8;
+  --orange:#ea8a0c; --orangebg:#fef0d9; --orangeink:#b45309;
+  --red:#dc2626; --redbg:#fee2e2; --redink:#b91c1c;
+  --shadow:0 2px 10px rgba(30,41,59,.08);
+  --radius:22px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);
+  font-size:17px;line-height:1.4;-webkit-text-size-adjust:100%;overscroll-behavior-y:none}
+header{background:linear-gradient(120deg,var(--brand),var(--brand2));color:#fff;padding:16px 18px;
+  position:sticky;top:0;z-index:50;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px}
+header .back{background:rgba(255,255,255,.18);border:none;color:#fff;width:44px;height:44px;border-radius:14px;
+  font-size:22px;cursor:pointer;flex:0 0 auto;display:none;align-items:center;justify-content:center}
+header .back.show{display:flex}
+header h1{font-size:20px;margin:0;font-weight:800;letter-spacing:.2px;flex:1}
+header .sub{font-size:12px;opacity:.9;font-weight:500}
+.tools{margin-left:auto;display:flex;gap:8px;flex:0 0 auto}
+.tools button{background:rgba(255,255,255,.16);border:none;color:#fff;padding:9px 12px;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer}
+main{padding:16px 14px 90px;max-width:720px;margin:0 auto}
+.screen{display:none}
+.screen.active{display:block;animation:fade .18s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* mm selection grid */
+.mm-title{font-size:15px;color:var(--muted);font-weight:600;margin:6px 4px 14px}
+.mm-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.mm-btn{background:var(--panel);border:2px solid var(--line);border-radius:var(--radius);padding:26px 16px;
+  cursor:pointer;text-align:center;box-shadow:var(--shadow);transition:.12s;display:flex;flex-direction:column;gap:6px;align-items:center}
+.mm-btn:active{transform:scale(.97)}
+.mm-btn .big{font-size:30px;font-weight:800;color:var(--brand)}
+.mm-btn .cnt{font-size:13px;color:var(--muted);font-weight:600}
+.mm-btn .totchip{margin-top:2px;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--bluebg);color:var(--blueink)}
+
+/* controls bar */
+.bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:150px;position:relative}
+.search input{width:100%;font-size:17px;padding:14px 16px;border:2px solid var(--line);border-radius:16px;background:#fff}
+.search input:focus{outline:none;border-color:var(--brand2)}
+.toggle{display:flex;align-items:center;gap:8px;background:#fff;border:2px solid var(--line);border-radius:16px;padding:11px 14px;cursor:pointer;font-weight:600;font-size:14px;user-select:none}
+.toggle.on{border-color:var(--brand);color:var(--brand);background:#f2f2ff}
+
+/* stone stock cards */
+.stone{border-radius:var(--radius);padding:16px 16px 14px;margin-bottom:12px;box-shadow:var(--shadow);
+  border:2px solid transparent;transition:background .2s,border-color .2s}
+.stone .top{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}
+.stone .name{font-size:19px;font-weight:800;flex:1;line-height:1.2}
+.stone .meta{font-size:12px;font-weight:600;opacity:.8;margin-top:3px}
+.stone .statechip{font-size:12px;font-weight:800;padding:5px 12px;border-radius:999px;white-space:nowrap}
+.stone .ctrl{display:flex;align-items:center;gap:12px;justify-content:center}
+.rbtn{width:60px;height:60px;border-radius:50%;border:none;font-size:30px;font-weight:800;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:.1s;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.rbtn:active{transform:scale(.9)}
+.rbtn.minus{background:#fff;color:var(--red);border:2px solid var(--red)}
+.rbtn.plus{background:#fff;color:var(--green);border:2px solid var(--green)}
+.stok-in{width:96px;height:60px;text-align:center;font-size:30px;font-weight:800;border:2px solid var(--line);
+  border-radius:16px;background:#fff;color:var(--ink);-moz-appearance:textfield}
+.stok-in::-webkit-outer-spin-button,.stok-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.stok-in:focus{outline:none;border-color:var(--brand2)}
+.unit{font-size:12px;color:var(--muted);text-align:center;margin-top:4px;font-weight:600}
+
+/* stock level colors */
+.lvl-green{background:var(--greenbg);border-color:#bbf7d0}
+.lvl-green .name{color:var(--greenink)} .lvl-green .statechip{background:var(--green);color:#fff}
+.lvl-blue{background:var(--bluebg);border-color:#bfdbfe}
+.lvl-blue .name{color:var(--blueink)} .lvl-blue .statechip{background:var(--blue);color:#fff}
+.lvl-orange{background:var(--orangebg);border-color:#fcd9a5}
+.lvl-orange .name{color:var(--orangeink)} .lvl-orange .statechip{background:var(--orange);color:#fff}
+.lvl-red{background:var(--redbg);border-color:#fecaca}
+.lvl-red .name{color:var(--redink)} .lvl-red .statechip{background:var(--red);color:#fff}
+.lvl-zero{background:#f8fafc;border-color:#e2e8f0}
+.lvl-zero .name{color:#64748b} .lvl-zero .statechip{background:#94a3b8;color:#fff}
+
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin:2px 4px 16px;font-size:12px;font-weight:700}
+.legend span{padding:5px 11px;border-radius:999px}
+.lg-g{background:var(--greenbg);color:var(--greenink)}
+.lg-b{background:var(--bluebg);color:var(--blueink)}
+.lg-o{background:var(--orangebg);color:var(--orangeink)}
+.lg-r{background:var(--redbg);color:var(--redink)}
+.empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:15px}
+.savechip{font-size:11px;opacity:.9;font-weight:600}
+input[type=file]{display:none}
+.addrow{margin:8px 4px 0;text-align:center}
+.addrow button{background:#fff;border:2px dashed var(--line);border-radius:16px;padding:14px 20px;font-size:15px;font-weight:700;color:var(--brand);cursor:pointer;width:100%}
+</style>
+</head>
+<body>
+<header>
+  <button class="back" id="backBtn" onclick="goHome()">‹</button>
+  <div style="flex:1">
+    <h1 id="title">🪨 Taş Stok Takip</h1>
+    <div class="sub" id="subtitle">mm seçerek başla</div>
+  </div>
+  <div class="tools">
+    <span class="savechip" id="saveChip">● kayıtlı</span>
+    <button onclick="exportData()">⬇︎</button>
+    <button onclick="document.getElementById('imp').click()">⬆︎</button>
+    <input type="file" id="imp" accept=".json" onchange="importData(event)">
+  </div>
+</header>
+
+<main>
+  <!-- SCREEN 1: mm selection -->
+  <section class="screen active" id="scr-mm">
+    <div class="mm-title">Hangi boyutta taş? Dokun ve stok ekranına geç.</div>
+    <div class="mm-grid" id="mmGrid"></div>
+  </section>
+
+  <!-- SCREEN 2: stock list -->
+  <section class="screen" id="scr-stock">
+    <div class="legend">
+      <span class="lg-g">15+ bol</span><span class="lg-b">10–14 iyi</span>
+      <span class="lg-o">5–9 azalıyor</span><span class="lg-r">0–4 kritik</span>
+    </div>
+    <div class="bar">
+      <div class="search"><input id="stoneSearch" placeholder="🔎 Taş ara..." oninput="renderStock()"></div>
+      <div class="toggle" id="lowToggle" onclick="toggleLow()">⬇︎ Az stok üstte</div>
+    </div>
+    <div id="stockList"></div>
+    <div class="addrow"><button onclick="addStone()">+ Bu boyuta yeni taş ekle</button></div>
+  </section>
+</main>
+
+<script>window.SEED_STONES=[{"ad": "SİTRİN", "mm": "8MM", "kalite": "AB", "kod": "135-018", "tur": "boncuk"}, {"ad": "SİTRİN", "mm": "8MM", "kalite": "AA", "kod": "", "tur": "boncuk"}, {"ad": "PEMBE KUVARS", "mm": "8MM", "kalite": "B", "kod": "135-53", "tur": "boncuk"}, {"ad": "ONİKS MAT", "mm": "8MM", "kalite": "AA", "kod": "135-417", "tur": "boncuk"}, {"ad": "ONİKS", "mm": "8MM", "kalite": "AA", "kod": "135-114", "tur": "boncuk"}, {"ad": "TURKUAZ", "mm": "8MM", "kalite": "AB", "kod": "135-212", "tur": "boncuk"}, {"ad": "DUMANLI KUVARS", "mm": "8MM", "kalite": "AB", "kod": "135-1240", "tur": "boncuk"}, {"ad": "YILDIZ TAŞI", "mm": "8MM", "kalite": "AA", "kod": "135-068", "tur": "boncuk"}, {"ad": "KAPLANGÖZÜ", "mm": "8MM", "kalite": "AB", "kod": "135-367", "tur": "boncuk"}, {"ad": "LAPİS LAZULİ", "mm": "8MM", "kalite": "AB", "kod": "135-038", "tur": "boncuk"}, {"ad": "YEŞİM", "mm": "8MM", "kalite": "AB", "kod": "135-048", "tur": "boncuk"}, {"ad": "NECEF MAT", "mm": "8MM", "kalite": "AB", "kod": "135-471", "tur": "boncuk"}, {"ad": "AY TAŞI", "mm": "8MM", "kalite": "AA", "kod": "135-552", "tur": "boncuk"}, {"ad": "AMETİST", "mm": "8MM", "kalite": "B", "kod": "135-662", "tur": "boncuk"}, {"ad": "AKUAMARİN", "mm": "8MM", "kalite": "AB", "kod": "135-377", "tur": "boncuk"}, {"ad": "LABRADORİT", "mm": "8MM", "kalite": "AA", "kod": "135-337", "tur": "boncuk"}, {"ad": "AVENTURİN", "mm": "8MM", "kalite": "AA", "kod": "135-554", "tur": "boncuk"}, {"ad": "KALSİT", "mm": "8MM", "kalite": "AA", "kod": "135-342", "tur": "boncuk"}, {"ad": "GÜNEŞ TAŞI", "mm": "8MM", "kalite": "AB", "kod": "135-371", "tur": "boncuk"}, {"ad": "APATİT", "mm": "8MM", "kalite": "AB", "kod": "135-036", "tur": "boncuk"}, {"ad": "OBSİDYEN GOLD", "mm": "8MM", "kalite": "AA", "kod": "135-353", "tur": "boncuk"}, {"ad": "OBSİDYEN SİLVER", "mm": "8MM", "kalite": "AA", "kod": "135-325", "tur": "boncuk"}, {"ad": "SELENİT", "mm": "8MM", "kalite": "AB", "kod": "135-401", "tur": "boncuk"}, {"ad": "PİRİT", "mm": "8MM", "kalite": "AA", "kod": "135-025", "tur": "boncuk"}, {"ad": "TERAHERTZ", "mm": "8MM", "kalite": "", "kod": "135-026", "tur": "boncuk"}, {"ad": "FLORİT", "mm": "8MM", "kalite": "AB", "kod": "135-1436", "tur": "boncuk"}, {"ad": "KRİSTAL KUVARS", "mm": "8MM", "kalite": "AA", "kod": "135-027", "tur": "boncuk"}, {"ad": "AKİK MADAGASKAR", "mm": "8MM", "kalite": "", "kod": "135-149", "tur": "boncuk"}, {"ad": "AKİK TİBET", "mm": "8MM", "kalite": "AA", "kod": "135-1006", "tur": "boncuk"}, {"ad": "AKİK TİBET MAT YEŞİL", "mm": "8MM", "kalite": "", "kod": "135-1298", "tur": "boncuk"}, {"ad": "AMAZONİT", "mm": "8MM", "kalite": "", "kod": "135-1374", "tur": "boncuk"}, {"ad": "JASPER DALMAÇYALI", "mm": "8MM", "kalite": "AA", "kod": "135-089", "tur": "boncuk"}, {"ad": "ÇİLEK KUVARS", "mm": "8MM", "kalite": "", "kod": "135-048", "tur": "boncuk"}, {"ad": "AZURİT", "mm": "8MM", "kalite": "AA", "kod": "135-318", "tur": "boncuk"}, {"ad": "JASPER KIRMIZI", "mm": "8MM", "kalite": "", "kod": "135-329", "tur": "boncuk"}, {"ad": "SODALİT", "mm": "8MM", "kalite": "AB", "kod": "135-551", "tur": "boncuk"}, {"ad": "RODONİT", "mm": "8MM", "kalite": "AA", "kod": "135-343", "tur": "boncuk"}, {"ad": "MALAKİT", "mm": "8MM", "kalite": "AA", "kod": "135-635", "tur": "boncuk"}, {"ad": "MORGANİT", "mm": "8MM", "kalite": "AA", "kod": "135-611", "tur": "boncuk"}, {"ad": "PREHNIT", "mm": "8MM", "kalite": "", "kod": "135-1210", "tur": "boncuk"}, {"ad": "RUTİL KUVARS", "mm": "8MM", "kalite": "", "kod": "135-004", "tur": "boncuk"}, {"ad": "UNAKİT", "mm": "8MM", "kalite": "AA", "kod": "135-0031", "tur": "boncuk"}, {"ad": "ZEBERCET", "mm": "8MM", "kalite": "", "kod": "135-1315", "tur": "boncuk"}, {"ad": "GARNET", "mm": "8MM", "kalite": "", "kod": "135-659", "tur": "boncuk"}, {"ad": "HEMATİT FÜME", "mm": "8MM", "kalite": "", "kod": "5029-002", "tur": "boncuk"}, {"ad": "JASPER AĞAÇ", "mm": "8MM", "kalite": "AB", "kod": "135-477", "tur": "boncuk"}, {"ad": "HAVLİT", "mm": "8MM", "kalite": "AA", "kod": "135-071", "tur": "boncuk"}, {"ad": "MELEK TAŞI", "mm": "8MM", "kalite": "AA", "kod": "135-374", "tur": "boncuk"}, {"ad": "BERİL", "mm": "8MM", "kalite": "", "kod": "135-332", "tur": "boncuk"}, {"ad": "RUDRAKSHA", "mm": "8MM", "kalite": "", "kod": "0135-2003", "tur": "boncuk"}, {"ad": "KAN TAŞI", "mm": "8MM", "kalite": "", "kod": "0135-0317", "tur": "boncuk"}, {"ad": "TURKUAZ", "mm": "10MM", "kalite": "AA", "kod": "0141-0501", "tur": "boncuk"}, {"ad": "SEDEF", "mm": "10MM", "kalite": "AA", "kod": "6100-0001", "tur": "boncuk"}, {"ad": "SEDEF PAUA", "mm": "24X26", "kalite": "AA", "kod": "6201-0040", "tur": "parca"}, {"ad": "SİTRİN", "mm": "6MM", "kalite": "AB", "kod": "136-1000", "tur": "boncuk"}, {"ad": "AY TAŞI", "mm": "6MM", "kalite": "AA", "kod": "136,-229", "tur": "boncuk"}, {"ad": "LAPİS LAZULİ", "mm": "6MM", "kalite": "AB", "kod": "136-972", "tur": "boncuk"}, {"ad": "YEŞİM", "mm": "6MM", "kalite": "C", "kod": "136-1297", "tur": "boncuk"}, {"ad": "APATİT", "mm": "6MM", "kalite": "AA", "kod": "136-149", "tur": "boncuk"}, {"ad": "PEMBE KUVARS", "mm": "6MM", "kalite": "AB", "kod": "136-121", "tur": "boncuk"}, {"ad": "KAPLAN GÖZÜ", "mm": "6MM", "kalite": "AB", "kod": "136-143", "tur": "boncuk"}, {"ad": "LAV TAŞI MAT", "mm": "6MM", "kalite": "AA", "kod": "136-13", "tur": "boncuk"}, {"ad": "AMETİST", "mm": "6MM", "kalite": "B+", "kod": "136-115", "tur": "boncuk"}, {"ad": "PİRİT", "mm": "6MM", "kalite": "AA", "kod": "136-111", "tur": "boncuk"}, {"ad": "SELENİT", "mm": "6MM", "kalite": "AA", "kod": "136-577", "tur": "boncuk"}, {"ad": "KALSİT", "mm": "6MM", "kalite": "AA", "kod": "136-010", "tur": "boncuk"}, {"ad": "RODONİT", "mm": "6MM", "kalite": "AA", "kod": "136-421", "tur": "boncuk"}, {"ad": "RED JASPER", "mm": "6MM", "kalite": "AA", "kod": "136-510", "tur": "boncuk"}, {"ad": "HAVLİT", "mm": "6MM", "kalite": "B+", "kod": "136-028", "tur": "boncuk"}, {"ad": "YILDIZ TAŞI", "mm": "6MM", "kalite": "", "kod": "136-158", "tur": "boncuk"}, {"ad": "LABRADORİT", "mm": "6MM", "kalite": "AB", "kod": "136-1277", "tur": "boncuk"}, {"ad": "AKİK KARELYAN", "mm": "6MM", "kalite": "AB", "kod": "136-922", "tur": "boncuk"}, {"ad": "AKİK MADAGASKAR", "mm": "6MM", "kalite": "", "kod": "136-501", "tur": "boncuk"}, {"ad": "SODALİT", "mm": "6MM", "kalite": "AA", "kod": "136-1293", "tur": "boncuk"}, {"ad": "MORGANİT", "mm": "6MM", "kalite": "AA", "kod": "136-1094", "tur": "boncuk"}, {"ad": "OBSİDYEN KARLI", "mm": "6MM", "kalite": "AA", "kod": "136-267", "tur": "boncuk"}, {"ad": "OBSİDYEN GOLD", "mm": "6MM", "kalite": "", "kod": "136-419", "tur": "boncuk"}, {"ad": "AZURİT", "mm": "6MM", "kalite": "AA", "kod": "136-157", "tur": "boncuk"}, {"ad": "TURMALİN", "mm": "6MM", "kalite": "AA", "kod": "136-243", "tur": "boncuk"}, {"ad": "KRİSTAL KUVARS", "mm": "6MM", "kalite": "AA", "kod": "136-120", "tur": "boncuk"}, {"ad": "PREHNIT", "mm": "6MM", "kalite": "AB", "kod": "136-139", "tur": "boncuk"}, {"ad": "KALSİT", "mm": "6MM", "kalite": "", "kod": "136-010", "tur": "boncuk"}, {"ad": "KAN TAŞI", "mm": "6MM", "kalite": "AB", "kod": "136.249", "tur": "boncuk"}, {"ad": "SHUNGIT", "mm": "6MM", "kalite": "AA", "kod": "136-235", "tur": "boncuk"}, {"ad": "ANYOLİT", "mm": "6MM", "kalite": "", "kod": "136-142", "tur": "boncuk"}, {"ad": "AMAZONİT", "mm": "6MM", "kalite": "AB", "kod": "136-127", "tur": "boncuk"}, {"ad": "AVENTURİN", "mm": "6MM", "kalite": "AA", "kod": "136-401", "tur": "boncuk"}, {"ad": "AKUAMARİN", "mm": "6MM", "kalite": "AA", "kod": "136-1097", "tur": "boncuk"}, {"ad": "GARNET", "mm": "6MM", "kalite": "AA", "kod": "0136-0001", "tur": "boncuk"}, {"ad": "MERCAN", "mm": "6MM", "kalite": "AA", "kod": "0134-0296", "tur": "boncuk"}, {"ad": "MELEK", "mm": "6MM", "kalite": "AA", "kod": "0136-0147", "tur": "boncuk"}, {"ad": "TURKUAZ", "mm": "6MM", "kalite": "AA", "kod": "0136-0034", "tur": "boncuk"}, {"ad": "ZEBERCET", "mm": "6MM", "kalite": "AA", "kod": "0136-0247", "tur": "boncuk"}, {"ad": "AMAZONİT", "mm": "6MM", "kalite": "AA", "kod": "0136-0127", "tur": "boncuk"}, {"ad": "KAN TAŞI", "mm": "6MM", "kalite": "AA", "kod": "0136-0487", "tur": "boncuk"}, {"ad": "DALMAÇYALI JASPER", "mm": "6MM", "kalite": "AA", "kod": "0136-0193", "tur": "boncuk"}, {"ad": "FLORİT", "mm": "6MM", "kalite": "AA", "kod": "0136-0137", "tur": "boncuk"}, {"ad": "GÜNEŞ", "mm": "6MM", "kalite": "AA", "kod": "0136-0146", "tur": "boncuk"}, {"ad": "HEMATİT YASSI", "mm": "6MM", "kalite": "AA", "kod": "5235-0082", "tur": "boncuk"}, {"ad": "İNCİ", "mm": "7MM", "kalite": "", "kod": "144-736", "tur": "boncuk"}, {"ad": "LABRADORİT", "mm": "15X25", "kalite": "", "kod": "148-1147", "tur": "parca"}, {"ad": "AVENTURİN", "mm": "15X25", "kalite": "", "kod": "148-1148", "tur": "parca"}, {"ad": "KRİSTAL KUVARS", "mm": "15X25", "kalite": "", "kod": "148-1153", "tur": "parca"}, {"ad": "SİTRİN AMORF", "mm": "15X25", "kalite": "", "kod": "148-1930", "tur": "parca"}, {"ad": "HEMATİT PARLAK FÜME", "mm": "8MM", "kalite": "", "kod": "5029-0002", "tur": "boncuk"}, {"ad": "TERAHERTZ", "mm": "4MM", "kalite": "", "kod": "140-1567", "tur": "boncuk"}, {"ad": "TERAHERTZ FASET", "mm": "2MM", "kalite": "", "kod": "140*565", "tur": "boncuk"}, {"ad": "HEMATİT ALTIN SARI DONDELA", "mm": "4X6MM", "kalite": "", "kod": "5468-082", "tur": "parca"}, {"ad": "HEMATİT PSARI SİLİNDİR", "mm": "3MM", "kalite": "AA", "kod": "5096-082", "tur": "boncuk"}, {"ad": "HEMATİT RONDELA", "mm": "4X2", "kalite": "AA", "kod": "5154-082", "tur": "parca"}, {"ad": "HEMATİT SARI", "mm": "4MM", "kalite": "", "kod": "5098-082", "tur": "boncuk"}, {"ad": "HEMATİT SARI", "mm": "6X2", "kalite": "", "kod": "5222-082", "tur": "parca"}, {"ad": "HEMATİT", "mm": "6X1", "kalite": "", "kod": "5218*082", "tur": "parca"}, {"ad": "HEMATİT", "mm": "3X4", "kalite": "", "kod": "5127-082", "tur": "parca"}, {"ad": "HEMATİT", "mm": "4X4", "kalite": "", "kod": "5178-082", "tur": "parca"}, {"ad": "HEMATİT SARI ÜÇGEN", "mm": "6X3", "kalite": "", "kod": "5347-082", "tur": "parca"}, {"ad": "HEMATİT RONDELA", "mm": "6X2", "kalite": "", "kod": "5224-079", "tur": "parca"}, {"ad": "HEMATİT GRİ KÜP", "mm": "6X6", "kalite": "", "kod": "5082-001", "tur": "parca"}, {"ad": "LAV TAŞI KÜP", "mm": "8X8", "kalite": "", "kod": "148-1933", "tur": "parca"}, {"ad": "COCONUT RONDELA", "mm": "8X3", "kalite": "", "kod": "137-052", "tur": "parca"}, {"ad": "SİNAMEKİ AĞACI RONDELA", "mm": "9X5", "kalite": "", "kod": "137-006", "tur": "parca"}, {"ad": "HEMATİT MAT AÇIK GRİ RONDELA", "mm": "6X2", "kalite": "", "kod": "5224-004", "tur": "parca"}, {"ad": "HEMATİT KAHVE KÜP", "mm": "6X6", "kalite": "AA", "kod": "5082-010", "tur": "parca"}, {"ad": "COCONOT DİSK", "mm": "8MM", "kalite": "AA", "kod": "137-039", "tur": "boncuk"}, {"ad": "HEMATİT MAT GRİ", "mm": "6X3", "kalite": "", "kod": "5224-002", "tur": "parca"}, {"ad": "HEMATİT MAT SARI RONDELA", "mm": "4X2", "kalite": "AA", "kod": "5224-077", "tur": "parca"}, {"ad": "HEMATİT PARLAK GÜMÜŞ KÜP", "mm": "6X6", "kalite": "AA", "kod": "5082-009", "tur": "parca"}, {"ad": "HEMATİT FÜME ALTIGEN", "mm": "6X6", "kalite": "", "kod": "5392-002", "tur": "parca"}, {"ad": "HEMATİT KAHVE ALTIGEN", "mm": "6X2", "kalite": "", "kod": "5229-010", "tur": "parca"}, {"ad": "HEMATİT KAHVERENGİ RONDELA", "mm": "6X5", "kalite": "", "kod": "5390-010", "tur": "parca"}, {"ad": "HEMATİT KAHVERENGİ ALTIGEN", "mm": "6X6", "kalite": "", "kod": "5392-010", "tur": "parca"}, {"ad": "MERCAN", "mm": "8MM", "kalite": "5,5 MM", "kod": "134-893", "tur": "boncuk"}, {"ad": "HEMATİT FÜME RONDELA", "mm": "6X5", "kalite": "", "kod": "5390-002", "tur": "parca"}, {"ad": "LABRADORİT KIRIK", "mm": "5X8", "kalite": "", "kod": "0146-0133", "tur": "parca"}, {"ad": "PEMBE KUVARS KIRIK", "mm": "5X8", "kalite": "", "kod": "0146-0013", "tur": "parca"}, {"ad": "AKUAMARİN KIRIK", "mm": "5X8", "kalite": "", "kod": "0146-0168", "tur": "parca"}, {"ad": "SEDEF KIRIK", "mm": "5X8", "kalite": "", "kod": "6084-0001", "tur": "parca"}, {"ad": "DALMAÇYALI JASPER KIRIK", "mm": "5X8", "kalite": "", "kod": "0146-0044", "tur": "parca"}, {"ad": "SİTRİN KIRIK", "mm": "5X8", "kalite": "", "kod": "0146-0103", "tur": "parca"}, {"ad": "AY TAŞI KIRIK", "mm": "5X8", "kalite": "", "kod": "0146-0163", "tur": "parca"}, {"ad": "İNCİ RONDELA", "mm": "10X3", "kalite": "", "kod": "0144-0852", "tur": "parca"}, {"ad": "KIRMIZI JASPER KIRIK", "mm": "5X8", "kalite": "", "kod": "0146-0118", "tur": "parca"}, {"ad": "AMAZONİT KIRIK", "mm": "5X8", "kalite": "", "kod": "0146-0149", "tur": "parca"}, {"ad": "LAPİS KIRIK", "mm": "5X8", "kalite": "", "kod": "0146-0104", "tur": "parca"}, {"ad": "YEŞİM KIRIK", "mm": "5X8", "kalite": "", "kod": "0146-0090", "tur": "parca"}, {"ad": "AVENTURİN KIRIK", "mm": "5X8", "kalite": "", "kod": "0146-0007", "tur": "parca"}, {"ad": "AMETİST KIRIK", "mm": "5X8", "kalite": "", "kod": "0146-0106", "tur": "parca"}, {"ad": "KAPLANGÖZÜ KIRIK", "mm": "5X8", "kalite": "", "kod": "0146-0014", "tur": "parca"}, {"ad": "OBSİDYEN KIRIK", "mm": "5X8", "kalite": "", "kod": "0146-0009", "tur": "parca"}, {"ad": "İNCİ ÇUBUK", "mm": "7X18", "kalite": "", "kod": "0144-0242", "tur": "parca"}];window.SEED_VERSION=2;</script>
+<script>
+"use strict";
+const LS_KEY="tas_stok_v1";
+const uid=()=>Math.random().toString(36).slice(2,9);
+function norm(s){return String(s==null?"":s).replace(/İ/g,"i").replace(/I/g,"i").replace(/ı/g,"i").replace(/Ş/g,"ş").replace(/Ğ/g,"ğ").replace(/Ü/g,"ü").replace(/Ö/g,"ö").replace(/Ç/g,"ç").toLocaleLowerCase("tr").replace(/[\u0307]/g,"").trim();}
+const num=v=>{const n=parseInt(String(v).replace(/[^0-9-]/g,""),10);return isFinite(n)?n:0;};
+
+function seedStones(){return (window.SEED_STONES||[]).map(s=>({id:uid(),ad:s.ad,mm:s.mm,kalite:s.kalite||"",kod:s.kod||"",tur:s.tur||"boncuk",stok:0}));}
+
+// Yeni sürümde eklenen taşları, kullanıcının girdiği stokları BOZMADAN listeye ekler.
+function mergeSeed(st){
+  if(!st||!Array.isArray(st.stones))return;
+  const ver=st.seedVersion||1;
+  if(ver>=(window.SEED_VERSION||1))return; // zaten güncel
+  const key=s=>norm(s.ad)+"|"+String(s.mm||"").toUpperCase()+"|"+norm(s.kalite)+"|"+norm(s.kod);
+  const have=new Set(st.stones.map(key));
+  let added=0;
+  (window.SEED_STONES||[]).forEach(s=>{
+    const k=norm(s.ad)+"|"+String(s.mm||"").toUpperCase()+"|"+norm(s.kalite)+"|"+norm(s.kod);
+    if(!have.has(k)){ st.stones.push({id:uid(),ad:s.ad,mm:s.mm,kalite:s.kalite||"",kod:s.kod||"",tur:s.tur||"boncuk",stok:0}); added++; }
+  });
+  st.seedVersion=window.SEED_VERSION||1;
+  window.__added=added;
+}
+
+let state=load();
+function load(){
+  try{const raw=localStorage.getItem(LS_KEY);if(raw){const st=JSON.parse(raw);mergeSeed(st);return st;}}catch(e){}
+  return {seedVersion:window.SEED_VERSION||1, stones:seedStones()};
+}
+let saveT=null;
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(state));chip(true);}catch(e){chip(false);}}
+function chip(ok){const el=document.getElementById("saveChip");if(!el)return;el.textContent=ok?"● kayıtlı":"● kayıt YOK";el.style.color=ok?"#c9f2d9":"#ffd2d2";}
+function touch(){clearTimeout(saveT);saveT=setTimeout(save,200);}
+
+let currentMm=null, lowFirst=false;
+
+// mm bucket ordering: main sizes first by count, then rest
+function mmBuckets(){
+  const m={};
+  state.stones.forEach(s=>{const k=s.mm||"?";(m[k]=m[k]||{count:0,tot:0});m[k].count++;m[k].tot+=num(s.stok);});
+  const keys=Object.keys(m);
+  const pref=["6MM","8MM","10MM","4MM","12MM","2MM","3MM","7MM"];
+  keys.sort((a,b)=>{
+    const ia=pref.indexOf(a),ib=pref.indexOf(b);
+    if(ia!==-1||ib!==-1){ if(ia===-1)return 1; if(ib===-1)return -1; return ia-ib; }
+    return b.length-a.length? m[b].count-m[a].count : a.localeCompare(b,'tr');
+  });
+  return {m,keys};
+}
+function renderMm(){
+  const {m,keys}=mmBuckets();
+  const grid=document.getElementById("mmGrid");
+  grid.innerHTML=keys.map(k=>`<button class="mm-btn" onclick="openMm('${k.replace(/'/g,"\\'")}')">
+      <div class="big">${escapeHtml(k)}</div>
+      <div class="cnt">${m[k].count} çeşit taş</div>
+      <div class="totchip">Toplam ${m[k].tot} dizin</div>
+    </button>`).join("");
+}
+function openMm(mm){
+  currentMm=mm;
+  document.getElementById("scr-mm").classList.remove("active");
+  document.getElementById("scr-stock").classList.add("active");
+  document.getElementById("backBtn").classList.add("show");
+  document.getElementById("title").textContent="🪨 "+mm;
+  document.getElementById("subtitle").textContent="Stok ekle / çıkar";
+  document.getElementById("stoneSearch").value="";
+  window.scrollTo(0,0);
+  renderStock();
+}
+function goHome(){
+  currentMm=null;
+  document.getElementById("scr-stock").classList.remove("active");
+  document.getElementById("scr-mm").classList.add("active");
+  document.getElementById("backBtn").classList.remove("show");
+  document.getElementById("title").textContent="🪨 Taş Stok Takip";
+  document.getElementById("subtitle").textContent="mm seçerek başla";
+  window.scrollTo(0,0);
+  renderMm();
+}
+function toggleLow(){lowFirst=!lowFirst;document.getElementById("lowToggle").classList.toggle("on",lowFirst);renderStock();}
+
+function levelClass(v){
+  v=num(v);
+  if(v<=0) return "lvl-zero";
+  if(v<5) return "lvl-red";
+  if(v<10) return "lvl-orange";
+  if(v<15) return "lvl-blue";
+  return "lvl-green";
+}
+function levelLabel(v){
+  v=num(v);
+  if(v<=0) return "TÜKENDİ";
+  if(v<5) return "KRİTİK";
+  if(v<10) return "AZALIYOR";
+  if(v<15) return "İYİ";
+  return "BOL";
+}
+
+function renderStock(){
+  const q=norm(document.getElementById("stoneSearch").value);
+  let list=state.stones.filter(s=>s.mm===currentMm && (!q||norm(s.ad).includes(q)||norm(s.kod).includes(q)));
+  list.sort((a,b)=> lowFirst ? (num(a.stok)-num(b.stok))||a.ad.localeCompare(b.ad,'tr') : a.ad.localeCompare(b.ad,'tr',{sensitivity:'base'}));
+  const box=document.getElementById("stockList");
+  if(list.length===0){box.innerHTML='<div class="empty">Bu boyutta taş yok.<br>Aşağıdan ekleyebilirsin.</div>';return;}
+  box.innerHTML=list.map(s=>{
+    const lvl=levelClass(s.stok);
+    return `<div class="stone ${lvl}" id="card_${s.id}">
+      <div class="top">
+        <div style="flex:1">
+          <div class="name">${escapeHtml(s.ad)}</div>
+          <div class="meta">${s.kalite?escapeHtml(s.kalite)+" · ":""}${s.kod?escapeHtml(s.kod):""}</div>
+        </div>
+        <div class="statechip" id="chip_${s.id}">${levelLabel(s.stok)} · ${num(s.stok)}</div>
+      </div>
+      <div class="ctrl">
+        <button class="rbtn minus" onclick="bump('${s.id}',-1)">−</button>
+        <input class="stok-in" type="number" inputmode="numeric" id="in_${s.id}" value="${num(s.stok)}"
+          onfocus="this.select()" oninput="setStok('${s.id}',this.value)">
+        <button class="rbtn plus" onclick="bump('${s.id}',1)">+</button>
+      </div>
+      <div class="unit">dizin</div>
+    </div>`;
+  }).join("");
+}
+
+function applyLevel(s){
+  const card=document.getElementById("card_"+s.id);
+  if(card){ card.className="stone "+levelClass(s.stok); }
+  const chip=document.getElementById("chip_"+s.id);
+  if(chip){ chip.textContent=levelLabel(s.stok)+" · "+num(s.stok); }
+}
+function bump(id,d){
+  const s=state.stones.find(x=>x.id===id);if(!s)return;
+  s.stok=Math.max(0,num(s.stok)+d);
+  const inp=document.getElementById("in_"+id);if(inp)inp.value=s.stok;
+  applyLevel(s);
+  touch();
+  if(lowFirst){ clearTimeout(window._reflow); window._reflow=setTimeout(renderStock,700); }
+}
+function setStok(id,v){
+  const s=state.stones.find(x=>x.id===id);if(!s)return;
+  s.stok=Math.max(0,num(v));
+  applyLevel(s);
+  touch();
+}
+function addStone(){
+  const ad=prompt("Yeni taşın adı ("+currentMm+"):");
+  if(!ad||!ad.trim())return;
+  state.stones.push({id:uid(),ad:ad.trim(),mm:currentMm,kalite:"",kod:"",tur:"boncuk",stok:0});
+  touch();renderStock();
+}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const a=document.createElement("a");const d=new Date().toISOString().slice(0,10);
+  a.href=URL.createObjectURL(blob);a.download="tas-stok-yedek-"+d+".json";a.click();URL.revokeObjectURL(a.href);
+}
+function importData(e){
+  const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.stones)throw new Error("geçersiz");state=d;save();currentMm?renderStock():renderMm();alert("Yedek yüklendi.");}catch(err){alert("Okunamadı: "+err.message);}};
+  r.readAsText(f);e.target.value="";
+}
+function escapeHtml(s){return String(s==null?"":s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+
+renderMm();save();
+if(window.__added>0){ setTimeout(()=>alert(window.__added+" yeni taş listeye eklendi (stok bilgilerin korundu)."),300); }
+window.addEventListener("beforeunload",save);
+</script>
+</body>
+</html>
