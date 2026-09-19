@@ -72,6 +72,26 @@ main{padding:16px 14px 90px;max-width:720px;margin:0 auto}
 .stok-in::-webkit-outer-spin-button,.stok-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .stok-in:focus{outline:none;border-color:var(--brand2)}
 .unit{font-size:12px;color:var(--muted);text-align:center;margin-top:4px;font-weight:600}
+/* BOX durumu satırı */
+.boxwrap{margin-top:12px;padding-top:12px;border-top:1px dashed rgba(0,0,0,.12)}
+.boxlabel{font-size:14px;font-weight:700;margin-bottom:8px;text-align:center;color:var(--ink)}
+.boxlabel b{font-weight:800}
+.boxbtns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.boxbtn{flex:1;min-width:48px;padding:12px 6px;border-radius:14px;border:2px solid var(--line);background:#fff;
+  font-size:15px;font-weight:800;color:var(--muted);cursor:pointer;transition:.1s}
+.boxbtn:active{transform:scale(.94)}
+.boxbtn.on{color:#fff;border-color:transparent}
+.boxbtn.on.l0{background:var(--red)}
+.boxbtn.on.l1{background:#ef6c00}
+.boxbtn.on.l2{background:var(--orange)}
+.boxbtn.on.l3{background:var(--blue)}
+.boxbtn.on.l4{background:var(--green)}
+/* box seviyesine göre satır arka plan ipucu (hafif) */
+.boxwrap.box-l0 .boxlabel b{color:var(--redink)}
+.boxwrap.box-l1 .boxlabel b{color:#b45309}
+.boxwrap.box-l2 .boxlabel b{color:var(--orangeink)}
+.boxwrap.box-l3 .boxlabel b{color:var(--blueink)}
+.boxwrap.box-l4 .boxlabel b{color:var(--greenink)}
 
 /* stock level colors */
 .lvl-green{background:var(--greenbg);border-color:#bbf7d0}
@@ -143,7 +163,7 @@ const uid=()=>Math.random().toString(36).slice(2,9);
 function norm(s){return String(s==null?"":s).replace(/İ/g,"i").replace(/I/g,"i").replace(/ı/g,"i").replace(/Ş/g,"ş").replace(/Ğ/g,"ğ").replace(/Ü/g,"ü").replace(/Ö/g,"ö").replace(/Ç/g,"ç").toLocaleLowerCase("tr").replace(/[\u0307]/g,"").trim();}
 const num=v=>{const n=parseInt(String(v).replace(/[^0-9-]/g,""),10);return isFinite(n)?n:0;};
 
-function seedStones(){return (window.SEED_STONES||[]).map(s=>({id:uid(),ad:s.ad,mm:s.mm,kalite:s.kalite||"",kod:s.kod||"",tur:s.tur||"boncuk",stok:0}));}
+function seedStones(){return (window.SEED_STONES||[]).map(s=>({id:uid(),ad:s.ad,mm:s.mm,kalite:s.kalite||"",kod:s.kod||"",tur:s.tur||"boncuk",stok:0,box:0}));}
 
 // Yeni sürümde eklenen taşları, kullanıcının girdiği stokları BOZMADAN listeye ekler.
 function mergeSeed(st){
@@ -155,7 +175,7 @@ function mergeSeed(st){
   let added=0;
   (window.SEED_STONES||[]).forEach(s=>{
     const k=norm(s.ad)+"|"+String(s.mm||"").toUpperCase()+"|"+norm(s.kalite)+"|"+norm(s.kod);
-    if(!have.has(k)){ st.stones.push({id:uid(),ad:s.ad,mm:s.mm,kalite:s.kalite||"",kod:s.kod||"",tur:s.tur||"boncuk",stok:0}); added++; }
+    if(!have.has(k)){ st.stones.push({id:uid(),ad:s.ad,mm:s.mm,kalite:s.kalite||"",kod:s.kod||"",tur:s.tur||"boncuk",stok:0,box:0}); added++; }
   });
   st.seedVersion=window.SEED_VERSION||1;
   window.__added=added;
@@ -256,7 +276,11 @@ function renderStock(){
           onfocus="this.select()" oninput="setStok('${s.id}',this.value)">
         <button class="rbtn plus" onclick="bump('${s.id}',1)">+</button>
       </div>
-      <div class="unit">dizin</div>
+      <div class="unit">dizin (yedek stok)</div>
+      <div class="boxwrap ${boxClass(s.box)}" id="boxwrap_${s.id}">
+        <div class="boxlabel">Box durumu: <b id="boxtxt_${s.id}">${BOX_LABELS[num(s.box)]}</b></div>
+        <div class="boxbtns">${boxButtons(s)}</div>
+      </div>
     </div>`;
   }).join("");
 }
@@ -266,6 +290,23 @@ function applyLevel(s){
   if(card){ card.className="stone "+levelClass(s.stok); }
   const chip=document.getElementById("chip_"+s.id);
   if(chip){ chip.textContent=levelLabel(s.stok)+" · "+num(s.stok); }
+}
+
+// ---- BOX durumu: 0=Boş,1=Çeyrek,2=Yarım,3=Üç Çeyrek,4=Tam ----
+const BOX_LABELS=["Boş","Çeyrek","Yarım","Üç Çeyrek","Tam"];
+const BOX_SHORT=["Boş","¼","½","¾","Tam"];
+function boxClass(v){v=num(v);return "box-l"+(v>=0&&v<=4?v:0);}
+function boxButtons(s){
+  const cur=num(s.box);
+  return BOX_SHORT.map((lbl,i)=>`<button class="boxbtn ${i===cur?'on l'+i:''}" onclick="setBox('${s.id}',${i})">${lbl}</button>`).join("");
+}
+function setBox(id,v){
+  const s=state.stones.find(x=>x.id===id);if(!s)return;
+  s.box=num(v);
+  const wrap=document.getElementById("boxwrap_"+id);
+  if(wrap){ wrap.className="boxwrap "+boxClass(s.box); wrap.querySelector(".boxbtns").innerHTML=boxButtons(s); }
+  const txt=document.getElementById("boxtxt_"+id); if(txt) txt.textContent=BOX_LABELS[num(s.box)];
+  touch();
 }
 function bump(id,d){
   const s=state.stones.find(x=>x.id===id);if(!s)return;
@@ -284,7 +325,7 @@ function setStok(id,v){
 function addStone(){
   const ad=prompt("Yeni taşın adı ("+currentMm+"):");
   if(!ad||!ad.trim())return;
-  state.stones.push({id:uid(),ad:ad.trim(),mm:currentMm,kalite:"",kod:"",tur:"boncuk",stok:0});
+  state.stones.push({id:uid(),ad:ad.trim(),mm:currentMm,kalite:"",kod:"",tur:"boncuk",stok:0,box:0});
   touch();renderStock();
 }
 
